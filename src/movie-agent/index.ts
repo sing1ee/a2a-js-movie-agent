@@ -195,11 +195,11 @@ export class MovieAgentExecutor implements AgentExecutor {
         return;
       }
 
-      // 处理 OpenAI 响应
+      // handle openai response
       const choice = response.choices[0];
       let responseText = choice.message.content || '';
       
-      // 处理工具调用
+      // handle tool calls
       if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
         const toolResults: string[] = [];
         
@@ -212,7 +212,7 @@ export class MovieAgentExecutor implements AgentExecutor {
           }
         }
         
-        // 如果有工具调用，需要再次调用 AI 来获取最终回答
+        // if there are tool calls, we need to call ai again to get the final answer
         const toolMessage = toolResults.join('\n\n');
         const followUpMessages = [...messages];
         followUpMessages.push({
@@ -317,8 +317,8 @@ export const movieAgentCard: AgentCard = {
   // Adjust the base URL and port as needed. /a2a is the default base in A2AExpressApp
   url: `http://localhost:${config.port}/`, // Example: if baseUrl in A2AExpressApp 
   provider: {
-    organization: 'A2A Samples',
-    url: 'https://example.com/a2a-samples' // Added provider URL
+    organization: 'A2AProtocol.ai',
+    url: 'https://a2aprotocol.ai' // Added provider URL
   },
   version: '0.0.2', // Incremented version
   capabilities: {

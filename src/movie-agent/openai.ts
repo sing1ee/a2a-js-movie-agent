@@ -8,7 +8,7 @@ export const openai = new OpenAI({
 });
 
 // default model config
-export const DEFAULT_MODEL = "meta-llama/llama-3.1-8b-instruct:free";
+export const DEFAULT_MODEL = "anthropic/claude-3.5-sonnet";
 
 // tool call interface
 export interface ToolCall {
