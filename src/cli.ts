@@ -2,6 +2,7 @@
 
 import readline from "node:readline";
 import crypto from "node:crypto";
+import { config } from "./config/env.js";
 
 import {
   // Specific Params/Payload types used by the CLI
@@ -46,7 +47,7 @@ function generateId(): string { // Renamed for more general use
 // --- State ---
 let currentTaskId: string | undefined = undefined; // Initialize as undefined
 let currentContextId: string | undefined = undefined; // Initialize as undefined
-const serverUrl = process.argv[2] || "http://localhost:41241"; // Agent's base URL
+const serverUrl = process.argv[2] || `http://localhost:${config.port}`; // Agent's base URL
 const client = new A2AClient(serverUrl);
 let agentName = "Agent"; // Default, try to get from agent card later
 

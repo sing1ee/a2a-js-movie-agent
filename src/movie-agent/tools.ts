@@ -1,7 +1,7 @@
 import { registerTool, type ToolDefinition } from "./openai.js";
 import { callTmdbApi } from "./tmdb.js";
 
-// 搜索电影的工具实现
+// search movies tool implementation
 async function searchMoviesImpl({ query }: { query: string }) {
   console.log("[tmdb:searchMovies]", JSON.stringify(query));
   try {
@@ -28,7 +28,7 @@ async function searchMoviesImpl({ query }: { query: string }) {
   }
 }
 
-// 搜索人物的工具实现
+// search people tool implementation
 async function searchPeopleImpl({ query }: { query: string }) {
   console.log("[tmdb:searchPeople]", JSON.stringify(query));
   try {
@@ -66,11 +66,11 @@ async function searchPeopleImpl({ query }: { query: string }) {
   }
 }
 
-// 注册工具函数
+// register tool functions
 registerTool("searchMovies", searchMoviesImpl);
 registerTool("searchPeople", searchPeopleImpl);
 
-// 导出工具定义给 OpenAI
+// export tool definition to openai
 export const searchMoviesTool: ToolDefinition = {
   type: "function",
   function: {
@@ -107,5 +107,5 @@ export const searchPeopleTool: ToolDefinition = {
   }
 };
 
-// 导出所有工具定义的数组
+// export all tools
 export const allTools: ToolDefinition[] = [searchMoviesTool, searchPeopleTool];

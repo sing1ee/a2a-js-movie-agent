@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "cli": "bun --watch src/cli.ts",
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target node",
     "start": "node dist/index.js",
