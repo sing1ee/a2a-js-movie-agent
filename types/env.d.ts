@@ -5,6 +5,8 @@ declare global {
       TMDB_API_TOKEN: string;
       NODE_ENV?: 'development' | 'test' | 'production';
       PORT?: string;
+      PROXY_URL?: string;
+      USE_PROXY?: string;
     }
   }
 }

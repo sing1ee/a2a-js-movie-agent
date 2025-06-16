@@ -1,4 +1,8 @@
 import { config } from "../config/env.js";
+import axios from 'axios';
+import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { SocksProxyAgent } from 'socks-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 // Type definitions for TMDB API responses
 export interface TmdbSearchResult {
@@ -66,19 +70,94 @@ export interface TmdbMovieDetails extends TmdbSearchResult {
 }
 
 /**
- * Create headers for TMDB API requests
- * @returns Headers object with Bearer token authorization
+ * Verify proxy connectivity by testing a simple HTTP request
+ * @param proxyUrl The proxy URL to test
+ * @returns Promise that resolves to true if proxy is working
  */
-function createTmdbHeaders(): Headers {
+async function verifyProxyConnectivity(proxyUrl: string): Promise<boolean> {
+  try {
+    console.log(`🔍 Verifying proxy connectivity: ${proxyUrl}`);
+    
+    const agent = new HttpsProxyAgent(proxyUrl);
+    const testAxios = axios.create({
+      timeout: 10000,
+      httpsAgent: agent,
+      httpAgent: agent,
+    });
+
+    // Test proxy with a simple request to a reliable endpoint
+    const response = await testAxios.get('https://httpbin.org/ip', {
+      timeout: 5000,
+    });
+
+    if (response.status === 200) {
+      console.log(`✅ Proxy verification successful. Proxy IP: ${response.data.origin}`);
+      return true;
+    }
+    
+    console.warn(`⚠️ Proxy responded with status: ${response.status}`);
+    return false;
+  } catch (error) {
+    console.error(`❌ Proxy verification failed:`, error instanceof Error ? error.message : error);
+    return false;
+  }
+}
+
+/**
+ * Create axios instance with proper configuration
+ * @returns Configured axios instance
+ */
+async function createAxiosInstance(): Promise<AxiosInstance> {
   const apiToken = config.tmdbApiToken;
   if (!apiToken) {
     throw new Error("TMDB_API_TOKEN environment variable is not set");
   }
 
-  return new Headers({
-    'Authorization': `Bearer ${apiToken}`,
-    'Content-Type': 'application/json',
-  });
+  const axiosConfig: AxiosRequestConfig = {
+    timeout: 5000,
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+  };
+
+  // Configure proxy if enabled
+  if (config.useProxy && config.proxyUrl) {
+    // Verify proxy connectivity first
+    const isProxyWorking = await verifyProxyConnectivity(config.proxyUrl);
+    
+    if (isProxyWorking) {
+      try {
+        const agent = new HttpsProxyAgent(config.proxyUrl);
+        axiosConfig.httpsAgent = agent;
+        axiosConfig.httpAgent = agent;
+        console.log(`🌐 Using verified proxy: ${config.proxyUrl}`);
+      } catch (error) {
+        console.warn('Failed to create proxy agent:', error);
+        console.log('🌐 Proceeding without proxy');
+      }
+    } else {
+      console.warn('🌐 Proxy verification failed, proceeding without proxy');
+    }
+  } else {
+    console.log('🌐 Proxy disabled or not configured');
+  }
+
+  return axios.create(axiosConfig);
+}
+
+// Global axios instance
+let tmdbAxios: AxiosInstance | null = null;
+
+/**
+ * Get or create TMDB axios instance
+ * @returns Promise that resolves to configured axios instance
+ */
+async function getTmdbAxios(): Promise<AxiosInstance> {
+  if (!tmdbAxios) {
+    tmdbAxios = await createAxiosInstance();
+  }
+  return tmdbAxios;
 }
 
 /**
@@ -101,35 +180,38 @@ export async function searchTmdb(
   } = {}
 ): Promise<TmdbSearchResponse> {
   try {
-    const url = new URL(`https://api.themoviedb.org/3/search/${endpoint}`);
-    url.searchParams.append("query", query);
-    url.searchParams.append("include_adult", String(options.includeAdult ?? false));
-    url.searchParams.append("language", options.language ?? "en-US");
-    url.searchParams.append("page", String(options.page ?? 1));
+    const axiosInstance = await getTmdbAxios();
+    
+    const params: Record<string, string | number | boolean> = {
+      query,
+      include_adult: options.includeAdult ?? false,
+      language: options.language ?? "en-US",
+      page: options.page ?? 1,
+    };
     
     if (options.region) {
-      url.searchParams.append("region", options.region);
+      params.region = options.region;
     }
     if (options.year) {
-      url.searchParams.append("year", String(options.year));
+      params.year = options.year;
     }
     if (options.primaryReleaseYear) {
-      url.searchParams.append("primary_release_year", String(options.primaryReleaseYear));
+      params.primary_release_year = options.primaryReleaseYear;
     }
 
-    const response = await fetch(url.toString(), {
-      headers: createTmdbHeaders(),
+    const response = await axiosInstance.get(`/3/search/${endpoint}`, {
+      baseURL: 'https://api.themoviedb.org',
+      params,
     });
 
-    if (!response.ok) {
-      throw new Error(
-        `TMDB search API error: ${response.status} ${response.statusText}`
-      );
-    }
-
-    return await response.json();
+    return response.data as TmdbSearchResponse;
   } catch (error) {
     console.error(`Error searching TMDB (${endpoint}):`, error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        `TMDB search API error: ${error.response?.status} ${error.response?.statusText}`
+      );
+    }
     throw error;
   }
 }
@@ -145,26 +227,29 @@ export async function getMovieDetails(
   appendToResponse?: string[]
 ): Promise<TmdbMovieDetails> {
   try {
-    const url = new URL(`https://api.themoviedb.org/3/movie/${movieId}`);
-    url.searchParams.append("language", "en-US");
+    const axiosInstance = await getTmdbAxios();
+    
+    const params: Record<string, string> = {
+      language: "en-US",
+    };
     
     if (appendToResponse && appendToResponse.length > 0) {
-      url.searchParams.append("append_to_response", appendToResponse.join(","));
+      params.append_to_response = appendToResponse.join(",");
     }
 
-    const response = await fetch(url.toString(), {
-      headers: createTmdbHeaders(),
+    const response = await axiosInstance.get(`/3/movie/${movieId}`, {
+      baseURL: 'https://api.themoviedb.org',
+      params,
     });
 
-    if (!response.ok) {
-      throw new Error(
-        `TMDB movie details API error: ${response.status} ${response.statusText}`
-      );
-    }
-
-    return await response.json();
+    return response.data as TmdbMovieDetails;
   } catch (error) {
     console.error(`Error fetching movie details (ID: ${movieId}):`, error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        `TMDB movie details API error: ${error.response?.status} ${error.response?.statusText}`
+      );
+    }
     throw error;
   }
 }
@@ -224,4 +309,11 @@ export async function searchAndGetMovieDetails(
 export async function callTmdbApi(endpoint: string, query: string) {
   console.warn('callTmdbApi is deprecated. Use searchTmdb instead.');
   return searchTmdb(endpoint as any, query);
+}
+
+/**
+ * Reset the axios instance (useful for testing or when configuration changes)
+ */
+export function resetTmdbAxios(): void {
+  tmdbAxios = null;
 }

@@ -10,6 +10,7 @@ A movie information agent powered by TMDB API and AI.
 - **Multi-Search**: Search across movies, TV shows, and people simultaneously
 - **Smart API Usage**: Efficient search + details combination following TMDB best practices
 - **AI-Powered**: Uses OpenRouter for intelligent movie queries
+- **Proxy Support**: Built-in SOCKS5/HTTP proxy support for network requests
 
 ## Environment Setup
 
@@ -22,10 +23,28 @@ TMDB_API_TOKEN=your_TMDB_API_TOKEN_here
 # OpenRouter API Key for AI features
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 
+# Proxy Configuration (Optional)
+# Set USE_PROXY=true to enable proxy, default is true
+USE_PROXY=true
+
+# Proxy URL - supports socks5, http, https protocols
+# Default: socks5://127.0.0.1:7890
+PROXY_URL=socks5://127.0.0.1:7890
+
 # Optional
 NODE_ENV=development
 PORT=3000
 ```
+
+### Proxy Configuration
+
+The application supports proxy connections for TMDB API requests:
+
+- **Supported Protocols**: SOCKS5, HTTP, HTTPS
+- **Default Setting**: Proxy is enabled by default with `socks5://127.0.0.1:7890`
+- **Environment Variables**:
+  - `USE_PROXY`: Set to `true` or `false` to enable/disable proxy
+  - `PROXY_URL`: Proxy server URL (e.g., `socks5://127.0.0.1:7890`, `http://proxy.example.com:8080`)
 
 ## TMDB API Features
 
