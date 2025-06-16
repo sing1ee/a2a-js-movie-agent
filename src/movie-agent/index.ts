@@ -15,10 +15,6 @@ import { openai, DEFAULT_MODEL, executeTool, type ToolCall } from "./openai.js";
 import { allTools } from "./tools.js";
 import { config } from "../config/env.js";
 
-if (!process.env.TMDB_API_KEY) {
-  console.error("TMDB_API_KEY environment variable is required")
-  process.exit(1);
-}
 
 // Simple store for contexts
 const contexts: Map<string, Message[]> = new Map();

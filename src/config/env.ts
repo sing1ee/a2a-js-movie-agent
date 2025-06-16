@@ -5,7 +5,7 @@ dotenvConfig();
 
 // validate required env
 function validateEnv(): void {
-  const requiredVars = ['OPENROUTER_API_KEY', 'TMDB_API_KEY'];
+  const requiredVars = ['OPENROUTER_API_KEY', 'TMDB_API_TOKEN'];
   const missing = requiredVars.filter(varName => !process.env[varName]);
   
   if (missing.length > 0) {
@@ -19,7 +19,7 @@ function validateEnv(): void {
 export const config = {
   // API keys
   openRouterApiKey: process.env.OPENROUTER_API_KEY!,
-  tmdbApiKey: process.env.TMDB_API_KEY!,
+  tmdbApiToken: process.env.TMDB_API_TOKEN!,
   
   // app config
   nodeEnv: process.env.NODE_ENV || 'development',

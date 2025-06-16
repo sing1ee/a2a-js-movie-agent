@@ -18,7 +18,7 @@ A movie expert agent that can answer questions about movies and film industry pe
 2. Set environment variables:
    ```bash
    export OPENROUTER_API_KEY=your_openrouter_api_key_here
-   export TMDB_API_KEY=your_tmdb_api_key_here
+   export TMDB_API_TOKEN=your_TMDB_API_TOKEN_here
    ```
 
 ## Usage
