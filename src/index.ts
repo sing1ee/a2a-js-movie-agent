@@ -1,6 +1,7 @@
-import { InMemoryTaskStore, type TaskStore, A2AExpressApp, type AgentExecutor, RequestContext, type ExecutionEventBus, DefaultRequestHandler, type AgentCard, type Task, type TaskState, type TaskStatusUpdateEvent, type TextPart, type Message } from "@a2a-js/sdk";
+import { InMemoryTaskStore, type TaskStore, type AgentExecutor, RequestContext, type ExecutionEventBus, DefaultRequestHandler, type AgentCard, type Task, type TaskState, type TaskStatusUpdateEvent, type TextPart, type Message } from "@a2a-js/sdk";
 import { movieAgentCard, MovieAgentExecutor } from "./movie-agent/index.js";
-import express from "express";
+import { A2AHonoApp } from "./a2a-hono-app.js";
+import { serve } from '@hono/node-server';
 
 async function main() {
   // 1. Create TaskStore
@@ -16,15 +17,19 @@ async function main() {
     agentExecutor
   );
 
-  // 4. Create and setup A2AExpressApp
-  const appBuilder = new A2AExpressApp(requestHandler);
-  const expressApp = appBuilder.setupRoutes(express());
+  // 4. Create and setup A2AHonoApp
+  const appBuilder = new A2AHonoApp(requestHandler);
+  const honoApp = appBuilder.createApp();
 
   // 5. Start the server
-  const PORT = process.env.PORT || 41241;
-  expressApp.listen(PORT, () => {
-    console.log(`[MovieAgent] Server using new framework started on http://localhost:${PORT}`);
-    console.log(`[MovieAgent] Agent Card: http://localhost:${PORT}/.well-known/agent.json`);
+  const PORT = parseInt(process.env.PORT || '41241', 10);
+  
+  serve({
+    fetch: honoApp.fetch,
+    port: PORT,
+  }, (info) => {
+    console.log(`[MovieAgent] Server using Hono framework started on http://localhost:${info.port}`);
+    console.log(`[MovieAgent] Agent Card: http://localhost:${info.port}/.well-known/agent.json`);
     console.log('[MovieAgent] Press Ctrl+C to stop the server');
   });
 }
